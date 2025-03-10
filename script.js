@@ -4,27 +4,27 @@ const ctx = canvas.getContext('2d');
 const gravidade = 0.5;
 const numColunas = 3; 
 const numLinhas = 2;  
-const frameWidth = 120; // Largura de cada frame (600px / 3)
-const frameHeight = 40; // Altura de cada frame (160px / 2)
+const frameWidth = 120; 
+const frameHeight = 40; 
 let frameAtual = 0;
 let linhaAtual = 0;
 let contadorFrame = 0;
-const velocidadeAnimacao = 8; // Velocidade da troca de frames
+const velocidadeAnimacao = 8; 
+let gameOver = false
 
-// Carregar a imagem diretamente no JavaScript
 const personagemSprite = new Image();
-personagemSprite.src = '__Run-ezgif.com-gif-to-sprite-converter.png';  // Caminho correto da imagem
+personagemSprite.src = 'Personagem.png';  
 
 const imagemFundo = new Image();
-imagemFundo.src = 'FUNDO.png';  // Caminho correto da imagem de fundo
+imagemFundo.src = 'FUNDO.png';  
 
-// Verificar se a imagem foi carregada corretamente
+
 personagemSprite.onload = imagemFundo.onload = () => {
     console.log("Imagens carregadas!");
-    loop();  // Inicia o loop de animação assim que as imagens estiverem carregadas
+    loop();  
 };
 
-// Caso as imagens já estejam carregadas (caso o onload seja chamado rapidamente)
+
 if (personagemSprite.complete && imagemFundo.complete) {
     console.log("Imagens carregadas previamente!");
     loop();
@@ -35,22 +35,27 @@ document.addEventListener('keypress', (e) => {
         personagem.velocidadey = 15;
         personagem.pulando = true;
     }
-});
+})
+document.addEventListener('click', (e) => {
+    if(gameOver == true){
+        location.reload
+    }
+})
 
 const personagem = {
-    x: 100,  // Posição fixa no eixo X
-    y: canvas.height - 150,  // Posição no eixo Y
-    largura: 150,            // Largura do personagem
-    altura: 60,              // Altura do personagem
-    velocidadey: 0,          // Velocidade do personagem no eixo Y
-    pulando: false           // Estado de pulo
+    x: 100,  
+    y: canvas.height - 150,
+    largura: 150,            
+    altura: 60,             
+    velocidadey: 0,          
+    pulando: false         
 };
 
 function desenharPersonagem() {
     let sx = frameAtual * frameWidth;
     let sy = linhaAtual * frameHeight;
 
-    // Desenhando a imagem no canvas
+    
     ctx.drawImage(
         personagemSprite,
         sx, sy,
@@ -61,10 +66,10 @@ function desenharPersonagem() {
 
     contadorFrame++;
     if (contadorFrame >= velocidadeAnimacao) {
-        frameAtual = (frameAtual + 10) % numColunas;  // Troca de frame por coluna
+        frameAtual = (frameAtual + 10) % numColunas;  
         contadorFrame = 0;
 
-        // Altere a linha da animação de acordo com o frame atual
+        
         if (frameAtual === 0) {
             linhaAtual = (linhaAtual + 1) % numLinhas;
         }
@@ -72,26 +77,71 @@ function desenharPersonagem() {
 }
 
 function atualizarPersonagem() {
-    // Verifica o pulo, mas o personagem não se move horizontalmente
     if (personagem.pulando) {
         personagem.velocidadey -= gravidade;
         personagem.y -= personagem.velocidadey;
 
-        if (personagem.y >= canvas.height - personagem.altura) {
+        if (personagem.y >= canvas.height - 150) {
             personagem.velocidadey = 0;
             personagem.pulando = false;
-            personagem.y = canvas.height - personagem.altura;
+            personagem.y = canvas.height - 150;
         }
     }
 }
 
-function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpa a tela
+const obstaculo = {
+    x:canvas.width-50,
+    y:canvas.height-194,
+    largura:50,
+    altura:100,
+    velocidadex:3
+}
 
-    // Desenha a imagem de fundo
+function desenharObstaculo (){
+    ctx.fillStyle= 'red'
+    ctx.fillRect(obstaculo.x,obstaculo.y,obstaculo.largura,obstaculo.altura)
+}
+
+function atualizarObstaculo (){
+    obstaculo.x -= obstaculo.velocidadex
+    if(obstaculo.x <= 0 - obstaculo.largura){
+        obstaculo.x = canvas.width
+        obstaculo.velocidadex += 0.2
+        let nova_altura = (Math.random() * 50) + 100
+        obstaculo.altura = nova_altura
+        obstaculo.y = 307 - nova_altura
+    }
+}
+function houveColisao(){
+    personagem.velocidadey = 0
+    obstaculo.velocidadex = 0
+    ctx.fillStyle = 'red'
+    ctx.fillRect((canvas.width/2)-200,(canvas.height/2)-50,400,100)
+    gameOver = true
+    
+}
+function verificarColisao(){
+    if(
+        personagem.x < obstaculo.x + obstaculo.largura &&
+        personagem.x + personagem.largura > obstaculo.x &&
+        personagem.y < obstaculo.y + obstaculo.altura &&
+        personagem.y + personagem.altura > obstaculo.y
+    ){
+        houveColisao()
+    }
+}
+
+
+function loop() {
+    if (gameOver == false) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
     ctx.drawImage(imagemFundo, 0, 0, canvas.width, canvas.height);
 
-    desenharPersonagem();  // Desenha o personagem no canvas
-    atualizarPersonagem(); // Atualiza o estado do personagem (pulo, etc)
-    requestAnimationFrame(loop); // Repite o loop
+    desenharPersonagem();
+    atualizarPersonagem(); 
+    desenharObstaculo();
+    atualizarObstaculo();
+    verificarColisao();
+    requestAnimationFrame(loop); 
+}
 }
