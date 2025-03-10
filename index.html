@@ -11,15 +11,13 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            position: fixed;
             width: 100vw;
             height: 100vh;
-            -image: url(background.jpg);
-            background-size: cover;
-            background-position: center;
-            filter: blur(-6px);
+            background-image: url('background.jpg');
+            background-size: cover; /* Garante que a imagem de fundo cubra toda a tela */
+            background-position: center; /* Centraliza a imagem */
+            background-repeat: no-repeat;
         }
-
         canvas {
             border: 4px solid rgb(0, 0, 0);
             margin-top: 100px;
@@ -34,4 +32,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-background
