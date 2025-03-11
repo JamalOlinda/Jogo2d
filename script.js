@@ -2,14 +2,14 @@ const canvas = document.getElementById('jogo2d');
 const ctx = canvas.getContext('2d');
 
 const gravidade = 0.5;
-const numColunas = 3; 
+const numColunas = 10;  // Supondo que o spritesheet tenha 10 frames
 const numLinhas = 2;  
 const frameWidth = 120; 
 const frameHeight = 40; 
 let frameAtual = 0;
 let linhaAtual = 0;
-let contadorFrame = 6;
-const velocidadeAnimacao = 8; 
+let contadorFrame = 0;  // Inicializamos com 0 para o contador de quadros
+const velocidadeAnimacao = 3;  // Quanto maior, mais lento será a animação
 let gameOver = false;
 
 const personagemSprite = new Image();
@@ -53,7 +53,7 @@ const personagem = {
     altura: 60,             
     velocidadey: 0,          
     pulando: false,         
-    
+
     // Hitbox personalizada para o personagem
     hitbox: {
         largura: 100, // Ajuste para corresponder ao corpo do personagem
@@ -83,7 +83,8 @@ function desenharPersonagem() {
 
     contadorFrame++;
     if (contadorFrame >= velocidadeAnimacao) {
-        frameAtual = (frameAtual + 10) % numColunas;  
+        // Avança para o próximo quadro da animação
+        frameAtual = (frameAtual + 1) % numColunas;  // Incrementa de 1, ao invés de +10
         contadorFrame = 0;
 
         if (frameAtual === 0) {
@@ -122,10 +123,16 @@ const obstaculo = {
     velocidadex: 4
 };
 
-// Função para desenhar o obstáculo
+// Função para desenhar o obstáculo como um triângulo
 function desenharObstaculo() {
     ctx.fillStyle = 'red';
-    ctx.fillRect(obstaculo.x, obstaculo.y, obstaculo.largura, obstaculo.altura);
+    ctx.beginPath();
+    // Define os três pontos do triângulo
+    ctx.moveTo(obstaculo.x, obstaculo.y + obstaculo.altura); // Ponto inferior esquerdo
+    ctx.lineTo(obstaculo.x + obstaculo.largura / 2, obstaculo.y); // Ponto superior (meio)
+    ctx.lineTo(obstaculo.x + obstaculo.largura, obstaculo.y + obstaculo.altura); // Ponto inferior direito
+    ctx.closePath();
+    ctx.fill();
 }
 
 // Função para atualizar o obstáculo (movimento)
@@ -149,6 +156,7 @@ function houveColisao() {
 
 // Função para verificar a colisão entre o personagem e o obstáculo
 function verificarColisao() {
+    // Verifica se a hitbox do personagem colide com o triângulo (verificando bounding box do triângulo)
     if (
         personagem.hitbox.x < obstaculo.x + obstaculo.largura &&
         personagem.hitbox.x + personagem.hitbox.largura > obstaculo.x &&
