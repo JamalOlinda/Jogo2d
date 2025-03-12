@@ -13,14 +13,14 @@ let contadorFrame = 5;  // Inicializamos com 0 para o contador de quadros
 const velocidadeAnimacao = 10;  // Quanto maior, mais lento será a animação
 
 const personagemSprite = new Image();
-personagemSprite.src = 'JOGO2DV1/Personagem.png';  
+personagemSprite.src = '../JOGO2DV1/Personagem.png';  
 
 const imagemFundo = new Image();
-imagemFundo.src = 'JOGO2DV1/FUNDO.png';  
+imagemFundo.src = '../JOGO2DV1/FUNDO.png';  
 
 // Imagem do Game Over
 const gameOverImage = new Image();
-gameOverImage.src = 'gameover.png'; // Substitua com o caminho correto da imagem
+gameOverImage.src = './gameover.png'; // Substitua com o caminho correto da imagem
 
 // Função que roda o loop do jogo
 personagemSprite.onload = imagemFundo.onload = gameOverImage.onload = () => {
@@ -90,23 +90,24 @@ class Personagem extends Entidade {
 
             this.atualizarHitbox();
 
-            if (this.y >= canvas.height - 150) {
+            if (this.y >= canvas.height - 150) { // 150 é o valor do "chão"
                 this.velocidadey = 0;
                 this.pulando = false;
-                this.y = canvas.height - 150;
+                this.y = canvas.height - 150;  // Certificando-se de que o personagem fique no chão
                 this.atualizarHitbox();
             }
         }
-
         this.atualizarHitbox();
     }
 }
 
 // Classe do Obstáculo
+// Classe do Obstáculo
 class Obstaculo extends Entidade {
     constructor(x, y, largura, altura, velocidadex) {
         super(x, y, largura, altura);
         this.velocidadex = velocidadex;
+        this.y = canvas.height - 95 - this.altura;
     }
 
     // Desenha o obstáculo
@@ -123,21 +124,28 @@ class Obstaculo extends Entidade {
     // Atualiza a posição do obstáculo
     atualizar() {
         this.x -= this.velocidadex;
+        
+        // Quando o obstáculo sair da tela, reposicionamos ele à direita com uma nova altura
         if (this.x <= 0 - this.largura) {
             this.x = canvas.width;
             this.velocidadex += 0.2;
-            let nova_altura = (Math.random() * 50) + 100;
+
+            // Gera a altura aleatória, mas garante que o obstáculo não fique abaixo do chão
+            let nova_altura = (Math.random() * 50) + 100;  // Altura aleatória entre 100 e 150
             this.altura = nova_altura;
-            this.y = canvas.height - 194 - nova_altura;
+            
+            // Ajusta a posição do obstáculo para que ele fique no topo do chão (não abaixo)
+            this.y = canvas.height - 94 - this.altura;  // Posiciona a base do obstáculo no chão
         }
     }
 }
 
+
 // Classe do Jogo
 class Jogo {
     constructor() {
-        this.personagem = new Personagem(100, canvas.height - 150, 150, 60);
-        this.obstaculo = new Obstaculo(canvas.width - 50, canvas.height - 194, 50, 100, 4);
+        this.personagem = new Personagem(100, canvas.height - 150, 150, 60);  // Ajuste a altura do personagem
+        this.obstaculo = new Obstaculo(canvas.width - 50, canvas.height - 150, 50, 100, 4);  // Ajuste a altura do obstáculo
         this.gameOver = false;
     }
 
