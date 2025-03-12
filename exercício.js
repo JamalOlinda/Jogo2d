@@ -1,9 +1,10 @@
-class veículo {
+class Veículo {
+    #velocidade
     constructor(tipo, marca, cor, velocidade, passageiros) {
         this.tipo = tipo,
         this.marca = marca,
         this.cor = cor,
-        this.velocidade = velocidade,
+        this.#velocidade = velocidade,
         this.passageiros = passageiros
     }
     acelerar = function (){
@@ -20,23 +21,46 @@ class veículo {
         }
     }
 }
-const carro = new veículo(
+const carro = new Veículo(
     "SUV",
     "Chevrolet",
     "Prata",
     0,
     0
 )
-const carro2 = new veículo(
+const carro2 = new Veículo(
     'sedan',
     'fiat',
     'preto',
     0,
     0
 )
-console.log(carro)
-carro.acelerar()
-carro.acelerar()
-carro2.acelerar()
-carro2.frear()
-carro.frear()
+
+class Aviao extends Veículo{
+    constructor(tipo, marca, cor, velocidade, passageiros, companhia){
+        super(tipo, marca, cor, velocidade, passageiros);
+        this.companhia = companhia
+
+    }
+}
+class Barco extends Veículo{
+    constructor(tipo, marca, cor, passageiros, noz){
+        super(tipo, marca, cor, passageiros)
+        this.noz = noz
+    }
+}
+frearbarco = function(){
+    if (this.noz > 0){
+        this.noz -= 50
+        console.log(this.noz)
+        
+    }else{
+        console.log("o Barco já esta parado")
+    }
+}
+acelerarBarco = function (){
+    this.noz += 10
+    console.log(this.noz)
+}
+const barco = new Barco('velejador', 'marca de barco', 2, 0)
+acelerarBarco()

@@ -8,8 +8,8 @@ const frameWidth = 120;
 const frameHeight = 40; 
 let frameAtual = 0;
 let linhaAtual = 0;
-let contadorFrame = 0;  // Inicializamos com 0 para o contador de quadros
-const velocidadeAnimacao = 3;  // Quanto maior, mais lento será a animação
+let contadorFrame = 5;  // Inicializamos com 0 para o contador de quadros
+const velocidadeAnimacao = 10;  // Quanto maior, mais lento será a animação
 let gameOver = false;
 
 const personagemSprite = new Image();
@@ -87,7 +87,7 @@ function desenharPersonagem() {
         frameAtual = (frameAtual + 1) % numColunas;  // Incrementa de 1, ao invés de +10
         contadorFrame = 0;
 
-        if (frameAtual === 0) {
+        if (frameAtual === 5) {
             linhaAtual = (linhaAtual + 1) % numLinhas;
         }
     }
