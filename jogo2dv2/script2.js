@@ -3,32 +3,32 @@ const ctx = canvas.getContext('2d');
 
 let gameOver = false;
 const gravidade = 0.5;
-const numColunas = 10;  // Supondo que o spritesheet tenha 10 frames
-const numLinhas = 2;  
-const frameWidth = 120; 
-const frameHeight = 40; 
+const numColunas = 10;
+const numLinhas = 2;
+const frameWidth = 120;
+const frameHeight = 40;
 let frameAtual = 0;
 let linhaAtual = 0;
-let contadorFrame = 5;  // Inicializamos com 0 para o contador de quadros
-const velocidadeAnimacao = 10;  // Quanto maior, mais lento será a animação
+let contadorFrame = 5;
+const velocidadeAnimacao = 10;
+
+const ObstaculoSprite = new Image();
+ObstaculoSprite.src = 'Inimigo.png'; // Mantendo a imagem do inimigo
 
 const personagemSprite = new Image();
-personagemSprite.src = '../JOGO2DV1/Personagem.png';  
+personagemSprite.src = '../JOGO2DV1/Personagem.png';
 
 const imagemFundo = new Image();
-imagemFundo.src = '../JOGO2DV1/FUNDO.png';  
+imagemFundo.src = '../JOGO2DV1/FUNDO.png';
 
-// Imagem do Game Over
 const gameOverImage = new Image();
-gameOverImage.src = './gameover.png'; // Substitua com o caminho correto da imagem
+gameOverImage.src = './gameover.png';
 
-// Função que roda o loop do jogo
 personagemSprite.onload = imagemFundo.onload = gameOverImage.onload = () => {
     console.log("Imagens carregadas!");
-    loop();  
+    loop();
 };
 
-// Definindo a classe base para as entidades
 class Entidade {
     constructor(x, y, largura, altura) {
         this.x = x;
@@ -38,13 +38,11 @@ class Entidade {
     }
 }
 
-// Classe do Personagem
 class Personagem extends Entidade {
     constructor(x, y, largura, altura) {
         super(x, y, largura, altura);
         this.velocidadey = 0;
         this.pulando = false;
-
         this.hitbox = {
             largura: 100,
             altura: 30,
@@ -52,13 +50,11 @@ class Personagem extends Entidade {
         };
     }
 
-    // Atualiza a posição da hitbox do personagem
     atualizarHitbox() {
         this.hitbox.x = this.x;
         this.hitbox.y = this.y + this.hitbox.offsetY;
     }
 
-    // Desenha o personagem
     desenhar(ctx) {
         let sx = frameAtual * frameWidth;
         let sy = linhaAtual * frameHeight;
@@ -75,25 +71,23 @@ class Personagem extends Entidade {
         if (contadorFrame >= velocidadeAnimacao) {
             frameAtual = (frameAtual + 1) % numColunas;
             contadorFrame = 0;
-            
+
             if (frameAtual === 5) {
                 linhaAtual = (linhaAtual + 1) % numLinhas;
             }
         }
     }
 
-    // Atualiza a posição do personagem
     atualizar() {
         if (this.pulando) {
             this.velocidadey -= gravidade;
             this.y -= this.velocidadey;
-
             this.atualizarHitbox();
 
-            if (this.y >= canvas.height - 150) { // 150 é o valor do "chão"
+            if (this.y >= canvas.height - 150) {
                 this.velocidadey = 0;
                 this.pulando = false;
-                this.y = canvas.height - 150;  // Certificando-se de que o personagem fique no chão
+                this.y = canvas.height - 150;
                 this.atualizarHitbox();
             }
         }
@@ -101,90 +95,130 @@ class Personagem extends Entidade {
     }
 }
 
-// Classe do Obstáculo
-// Classe do Obstáculo
 class Obstaculo extends Entidade {
     constructor(x, y, largura, altura, velocidadex) {
         super(x, y, largura, altura);
         this.velocidadex = velocidadex;
-        this.y = canvas.height - 95 - this.altura;
+        this.y = canvas.height - 80 - this.altura; // Mantém a posição Y fixada
+        this.passou = false; // Variável para marcar se o obstáculo passou
+        this.hitbox = {
+            x: this.x,
+            y: this.y,
+            largura: largura, // A hitbox será um quadrado do mesmo tamanho do inimigo
+            altura: altura
+        };
+        this.viradoParaDireita = true; // Flag para verificar o sentido da inversão
     }
 
-    // Desenha o obstáculo
     desenhar(ctx) {
-        ctx.fillStyle = 'red';
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y + this.altura); 
-        ctx.lineTo(this.x + this.largura / 2, this.y); 
-        ctx.lineTo(this.x + this.largura, this.y + this.altura); 
-        ctx.closePath();
-        ctx.fill();
+        if (!this.viradoParaDireita) {
+            ctx.save(); // Salva o estado atual do canvas
+
+            // Inverte a direção da imagem, movendo o ponto de referência do desenho
+            ctx.scale(-1, 1);
+            ctx.drawImage(ObstaculoSprite, -this.x - this.largura, this.y, this.largura, this.altura);
+            ctx.restore(); // Restaura o estado do canvas
+        } else {
+            // Desenha o inimigo sem inverter, se for virado para a direita
+            ctx.drawImage(ObstaculoSprite, this.x, this.y, this.largura, this.altura);
+        }
     }
 
-    // Atualiza a posição do obstáculo
+    atualizarHitbox() {
+        // Atualiza a posição da hitbox conforme o inimigo se move
+        this.hitbox.x = this.x;
+        this.hitbox.y = this.y;
+    }
+
     atualizar() {
-        this.x -= this.velocidadex;
-        
-        // Quando o obstáculo sair da tela, reposicionamos ele à direita com uma nova altura
+        this.x -= this.velocidadex; // Move o inimigo para a esquerda
+
+        // Se o inimigo atingir a borda da tela, inverte a direção
         if (this.x <= 0 - this.largura) {
             this.x = canvas.width;
             this.velocidadex += 0.2;
 
-            // Gera a altura aleatória, mas garante que o obstáculo não fique abaixo do chão
-            let nova_altura = (Math.random() * 50) + 100;  // Altura aleatória entre 100 e 150
-            this.altura = nova_altura;
-            
-            // Ajusta a posição do obstáculo para que ele fique no topo do chão (não abaixo)
-            this.y = canvas.height - 94 - this.altura;  // Posiciona a base do obstáculo no chão
+            let nova_altura = (Math.random() * 50) + 100;
+            this.altura = nova_altura; // Aumenta a altura do inimigo
+
+            // Mantém a posição Y fixa
+            this.y = canvas.height - 80 - this.altura;
+
+            // Inverte o sentido do inimigo
+            this.viradoParaDireita = !this.viradoParaDireita; // Alterna o estado
         }
+
+        this.atualizarHitbox(); // Atualiza a hitbox com a nova posição
     }
 }
 
-
-// Classe do Jogo
 class Jogo {
     constructor() {
-        this.personagem = new Personagem(100, canvas.height - 150, 150, 60);  // Ajuste a altura do personagem
-        this.obstaculo = new Obstaculo(canvas.width - 50, canvas.height - 150, 50, 100, 4);  // Ajuste a altura do obstáculo
+        this.personagem = new Personagem(100, canvas.height - 150, 150, 60);
+        this.obstaculo = new Obstaculo(canvas.width - 50, canvas.height - 150, 50, 50, 4); // Inimigo quadrado
         this.gameOver = false;
+        this.pontuacao = 0;
+        this.obstaculosPassados = 0; // Contador de obstáculos passados
     }
 
-    // Verifica colisão entre o personagem e o obstáculo
     verificarColisao() {
         if (
-            this.personagem.hitbox.x < this.obstaculo.x + this.obstaculo.largura &&
-            this.personagem.hitbox.x + this.personagem.hitbox.largura > this.obstaculo.x &&
-            this.personagem.hitbox.y < this.obstaculo.y + this.obstaculo.altura &&
-            this.personagem.hitbox.y + this.personagem.hitbox.altura > this.obstaculo.y
+            this.personagem.hitbox.x < this.obstaculo.hitbox.x + this.obstaculo.hitbox.largura &&
+            this.personagem.hitbox.x + this.personagem.hitbox.largura > this.obstaculo.hitbox.x &&
+            this.personagem.hitbox.y < this.obstaculo.hitbox.y + this.obstaculo.hitbox.altura &&
+            this.personagem.hitbox.y + this.personagem.hitbox.altura > this.obstaculo.hitbox.y
         ) {
             this.houveColisao();
         }
     }
 
-    // Função que define o que acontece quando ocorre uma colisão
     houveColisao() {
         this.gameOver = true;
     }
 
-    // Função principal do loop do jogo
+    // Atualiza a pontuação a cada quadro
+    atualizarPontuacao() {
+        // Verifica se o obstáculo passou completamente do lado esquerdo da tela
+        if (this.obstaculo.x + this.obstaculo.largura < 10) {
+            if (!this.obstaculo.passou) {
+                this.obstaculosPassados++; // Aumenta o contador de obstáculos passados
+                this.pontuacao = this.obstaculosPassados * 10; // Atualiza a pontuação
+                this.obstaculo.passou = true; // Marca o obstáculo como "passado"
+            }
+        } else {
+            this.obstaculo.passou = false; // Se o obstáculo não saiu da tela, reseta a marcação
+        }
+    }
+
+    desenharPontuacao() {
+        ctx.font = '20px "Fonte"'; // Mantendo a sua fonte original
+        ctx.fillStyle = 'black'; // Cor do texto
+        ctx.fillText(`Almas: ${this.pontuacao}`, 10, 30); // Exibe a pontuação no canto superior esquerdo
+    }
+
     loop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); 
-        ctx.drawImage(imagemFundo, 0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpa o canvas a cada frame
+        ctx.drawImage(imagemFundo, 0, 0, canvas.width, canvas.height); // Desenha o fundo
 
         if (!this.gameOver) {
-            this.personagem.desenhar(ctx);
-            this.personagem.atualizar();
-            this.obstaculo.desenhar(ctx);
-            this.obstaculo.atualizar();
-            this.verificarColisao();
-            requestAnimationFrame(() => this.loop());
+            this.personagem.desenhar(ctx); // Desenha o personagem
+            this.personagem.atualizar(); // Atualiza a posição do personagem
+            this.obstaculo.desenhar(ctx); // Desenha o obstáculo (inimigo)
+            this.obstaculo.atualizar(); // Atualiza a posição do obstáculo
+            this.verificarColisao(); // Verifica a colisão
+            this.atualizarPontuacao(); // Atualiza a pontuação
+            this.desenharPontuacao(); // Desenha a pontuação
+            requestAnimationFrame(() => this.loop()); // Continua o loop do jogo
         } else {
+            // Tela de Game Over
             ctx.drawImage(gameOverImage, (canvas.width / 2) - (gameOverImage.width / 2), (canvas.height / 2) - (gameOverImage.height / 2));
+            ctx.fillStyle = 'black'; // Cor do texto
+            ctx.font = '30px "Fonte"'; // Mantendo a sua fonte original
+            ctx.fillText(`Almas perdidas: ${this.pontuacao}`, (canvas.width / 2) - 100, (canvas.height / 2) + 100); // Exibe a pontuação final
         }
     }
 }
 
-// Instanciando o jogo e iniciando o loop
 const jogo = new Jogo();
 
 document.addEventListener('keypress', (e) => {
@@ -196,7 +230,7 @@ document.addEventListener('keypress', (e) => {
 
 document.addEventListener('click', (e) => {
     if (jogo.gameOver) {
-        location.reload(); // Corrigir a forma de recarregar a página
+        location.reload(); // Recarga a página ao clicar após o Game Over
     }
 });
 
